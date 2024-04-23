@@ -1,7 +1,6 @@
-from app import db
 from flask_migrate import Migrate
-from migrations import *
-
 from api import *
+from migrations import *
+from app import app, db
 
 migrate=Migrate(app,db)

@@ -72,6 +72,11 @@ class UserController:
             key=JWT_SECRETKEY
         )
         return token
+    def logout(self):
+        resp = make_response(Response.make(msg='Logged Out'))
+        resp.delete_cookie('x-auth-token')
+
+        return resp
 
 
 
