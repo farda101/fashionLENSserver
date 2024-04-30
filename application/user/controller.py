@@ -13,7 +13,7 @@ class UserController:
         self.schema = UserSchema
     
     def create(self):
-        reqJson = request.get_json()
+        reqJson = request.form
         email = reqJson["email"]
         username = reqJson["username"]
         password = reqJson["password"]
@@ -34,9 +34,42 @@ class UserController:
             User.email == email
         ).first()
         return user
+    
+    def changeUserName(self):
+        form = lambda field: request.form.get(field)
+
+        # Parse JWT Token
+        parsedJWT = self.decodeToken()
+
+        # Get email from parsed JWT
+        email= parsedJWT["email"]
+    
+        new_username = form("new_username")
+
+        # Find username with email from JWT
+        user = self.findUser(email=email)
+
+        # Update username
+        user.username = new_username
+        db.session.commit()
+
+        return Response.make(msg="Username Updated")
+    
+    def deleteUser(self):
+        # Parse JWT Token
+        parsedJWT = self.decodeToken()
+
+        # Get email from parsed JWT
+        email= parsedJWT["email"]
+
+        user = self.findUser(email=email)
+        db.session.delete(user)
+        db.session.commit()
+
+        return Response.make(msg="User deleted")
 
     def authenticate(self):
-        reqJson = request.get_json()
+        reqJson = request.form
         email = reqJson["email"]
         password = reqJson["password"]
         user = self.findUser(email=email)
@@ -69,7 +102,8 @@ class UserController:
                 'email': user.email,
                 'exp':datetime.utcnow() + timedelta(minutes=30)
             },
-            key=JWT_SECRETKEY
+            key=JWT_SECRETKEY,
+            algorithm="HS256"
         )
         return token
     def logout(self):
@@ -77,6 +111,15 @@ class UserController:
         resp.delete_cookie('x-auth-token')
 
         return resp
+    def encryptPassword(self, password):
+        if password:
+            return bcrypt.hashpw(
+                    password=password.encode('utf-8'),
+                    salt=bcrypt.gensalt()
+                ).decode()
+    def decodeToken(self):
+        token = request.cookies.get('x-auth-token')
+        return jwt.decode(token, JWT_SECRETKEY, algorithms="HS256", options={"verify_signature": False})
 
 
 

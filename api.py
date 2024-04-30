@@ -27,6 +27,18 @@ def logout():
   controller = UserController()
   return controller.logout()
 
+@app.put('/user')
+@auth.middleware
+def updateUser():
+  controller = UserController()
+  return controller.changeUserName()
+
+@app.delete('/user')
+@auth.middleware
+def deleteUser():
+  controller = UserController()
+  return controller.deleteUser()
+
 @app.route('/check-access', methods=['GET'])
 @auth.middleware
 def checkAccess():
